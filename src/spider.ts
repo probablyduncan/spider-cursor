@@ -167,8 +167,12 @@ window.addEventListener("resize", onResize);
 scaleCanvasToWindow();
 requestAnimationFrame(animate);
 
-
-
+const noMouseMessageTimeout = setTimeout(() => {
+    alert("i hear spiders like mouse cursors...\n(this website only works with a mouse)");
+}, 5000);
+window.addEventListener("mousemove", () => {
+    clearTimeout(noMouseMessageTimeout);
+}, { once: true });
 
 
 
