@@ -1,0 +1,22 @@
+canvas#ik-cursor {
+    width: 100vw;
+    height: 100svh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    user-select: none;
+    z-index: 9999;
+}
+
+header {
+    position: absolute;
+    top: 0.5rem;
+    left: 1rem;
+}
+
+footer {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 1rem;
+}
