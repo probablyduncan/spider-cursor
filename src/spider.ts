@@ -1,7 +1,7 @@
 import Vec2 from "@probablyduncan/common/vec2";
 import "./style.css";
 
-const canvas = document.getElementById("ik-cursor") as HTMLCanvasElement;
+const canvas = document.getElementById("spider-cursor") as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
 function onResize(_: UIEvent) {
