@@ -8,6 +8,70 @@ function onResize(_: UIEvent) {
     scaleCanvasToWindow();
 }
 
+let targetPos: Vec2 = getRandPosOffScreen();
+
+function onMouseMove(e: MouseEvent) {
+    if (noMoveTimeoutId) {
+        clearTimeout(noMoveTimeoutId);
+        noMoveTimeoutId = undefined;
+    }
+
+    if (idleTimeoutId) {
+        clearTimeout(idleTimeoutId);
+        idleTimeoutId = undefined;
+    }
+
+    targetPos = Vec2.From(e.x, e.y);
+}
+
+let animationDir = Vec2.Zero;
+let animationPos: Vec2;
+
+/**
+ * distance to keep spider away from cursor
+ */
+const CURSOR_PADDING = 20;
+
+// let prevTime: number;
+const animate: FrameRequestCallback = (_time) => {
+
+    // const deltaMS = time - (prevTime ?? time);
+    // prevTime = time;
+
+    if (!animationPos) {
+        animationPos = targetPos;
+    }
+    else {
+        const prevPos = animationPos.clone();
+
+        // used to compute direction and keep spider off of cursor
+        const deltaDistance = targetPos.subtract(prevPos);
+
+        // push target back a bit to keep the spider off of cursor
+        const newTarget = targetPos.subtract(deltaDistance.normalized().multiply(CURSOR_PADDING));
+
+        // interpolate the pos of the spider towards the target
+        animationPos = Vec2.From(idleTimeoutId ? 0.01 : 0.05).lerp(prevPos, newTarget);
+
+        animationDir = deltaDistance.normalized();
+
+        if (mouseMoved && !idleTimeoutId && Math.abs(deltaDistance.x) < CURSOR_PADDING && Math.abs(deltaDistance.y) < CURSOR_PADDING) {
+            // if we get here, we can assume the mouse hasn't been moving in a while?
+            // so we can set a timeout, and if the mouse moves before the timeout is up, we can cancel it no problem
+            setIdleTimeout();
+        }
+
+    }
+
+    clearCanvas();
+    drawLegs(animationPos, animationDir);
+    drawBody(animationPos, animationDir);
+
+    requestAnimationFrame(animate);
+}
+
+//#region canvas/drawing
+
 function scaleCanvasToWindow() {
     const dpr = window.devicePixelRatio || 1;
     canvas.style.width = window.innerWidth + "px";
@@ -18,64 +82,27 @@ function scaleCanvasToWindow() {
     ctx.scale(dpr, dpr);
 }
 
-function onMouseMove(e: MouseEvent) {
-    setMousePos(e.x, e.y);
-}
-
-function setMousePos(x: number, y: number) {
-    mousePos = Vec2.From(x, y);
-}
-
-
-let mousePos: Vec2;
-
-let animationDir = Vec2.Zero;
-let animationPos: Vec2;
-
-// let prevTime: number;
-const animate: FrameRequestCallback = (_time) => {
-
-    // const deltaMS = time - (prevTime ?? time);
-    // prevTime = time;
-
+function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
 
-    if (!mousePos) {
-        requestAnimationFrame(animate);
-        return;
-    }
-
-    if (!animationPos) {
-        animationPos = mousePos;
-    }
-    else {
-        const prevPos = animationPos.clone();
-        animationPos = Vec2.From(0.05).lerp(animationPos, mousePos);
-        animationDir = animationPos.subtract(prevPos).normalized();
-    }
-
-    // drawLineFromMouse(animationDir, 50);
-
-    // legs!
-    drawLegs(animationPos, animationDir);
-
-    // body
+function drawBody(centerPos: Vec2, centerRotation: Vec2) {
     ctx.beginPath();
-    ctx.arc(animationPos.x, animationPos.y, 3, 0, 2 * Math.PI);
+    ctx.arc(centerPos.x, centerPos.y, 3, 0, 2 * Math.PI);
     ctx.fill();
 
-    const headPos = animationDir.multiply(5).add(animationPos);
+    const headPos = centerRotation.multiply(5).add(centerPos);
     ctx.beginPath();
     ctx.arc(headPos.x, headPos.y, 3, 0, 2 * Math.PI);
     ctx.fill();
 
-    const thorax = animationDir.multiply(-6).add(animationPos);
+    const thorax = centerRotation.multiply(-6).add(centerPos);
     ctx.beginPath();
     ctx.arc(thorax.x, thorax.y, 6, 0, 2 * Math.PI);
     ctx.fill();
 
     // eyes
-    const leftEyePos = rotate(animationDir, -25).multiply(5).add(animationPos);
+    const leftEyePos = rotate(centerRotation, -25).multiply(5).add(centerPos);
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(leftEyePos.x, leftEyePos.y, 2, 0, 2 * Math.PI);
@@ -83,14 +110,14 @@ const animate: FrameRequestCallback = (_time) => {
     ctx.stroke();
     ctx.fillStyle = "black";
 
-    const leftPupilPos = rotate(animationDir, -25).multiply(5).add(animationPos);
+    const leftPupilPos = rotate(centerRotation, -25).multiply(5).add(centerPos);
     ctx.fillStyle = "black";
     ctx.beginPath();
     ctx.arc(leftPupilPos.x, leftPupilPos.y, 1, 0, 2 * Math.PI);
     ctx.fill();
     ctx.fillStyle = "black";
 
-    const rightEyePos = rotate(animationDir, 25).multiply(5).add(animationPos);
+    const rightEyePos = rotate(centerRotation, 25).multiply(5).add(centerPos);
     ctx.fillStyle = "white";
     ctx.beginPath();
     ctx.arc(rightEyePos.x, rightEyePos.y, 2, 0, 2 * Math.PI);
@@ -98,14 +125,12 @@ const animate: FrameRequestCallback = (_time) => {
     ctx.stroke();
     ctx.fillStyle = "black";
 
-    const rightPupilPos = rotate(animationDir, 25).multiply(5).add(animationPos);
+    const rightPupilPos = rotate(centerRotation, 25).multiply(5).add(centerPos);
     ctx.fillStyle = "black";
     ctx.beginPath();
     ctx.arc(rightPupilPos.x, rightPupilPos.y, 1, 0, 2 * Math.PI);
     ctx.fill();
     ctx.fillStyle = "black";
-
-    requestAnimationFrame(animate);
 }
 
 const LEG_DATA = [
@@ -143,6 +168,9 @@ function drawLegs(centerPos: Vec2, centerRotation: Vec2) {
     }
 }
 
+//#endregion
+//#region vec2 helpers
+
 const trigMapLol = new Map<number, [number, number]>();
 function getSinCos(deg: number): [number, number] {
     const cached = trigMapLol.get(deg)!;
@@ -160,18 +188,66 @@ function rotate(dir: Vec2, deg: number) {
     return Vec2.From(dir.x * cos - dir.y * sin, dir.x * sin + dir.y * cos);
 }
 
+//#endregion
+//#region idle
 
+let noMoveTimeoutId: number | undefined;
+function setIdleTimeout() {
+    if (!noMoveTimeoutId && !idleTimeoutId) {
+        noMoveTimeoutId = setTimeout(() => {
+            noMoveTimeoutId = undefined;
+            idle();
+        }, 2000);
+    }
+}
+
+let idleTimeoutId: number | undefined;
+function idle() {
+    idleTimeoutId = setTimeout(() => {
+        targetPos = Math.random() > 0.8 ? getRandPosOnScreen() : Math.random() > 0.6 ? getRandPosNear() : getRandPosAhead();
+        idle();
+    }, Math.floor(Math.random() * 3950 + 50));
+}
+
+function getRandPosOnScreen() {
+    const x = Math.floor(Math.random() * window.innerWidth);
+    const y = Math.floor(Math.random() * window.innerHeight);
+    return Vec2.From(x, y);
+}
+
+function getRandPosOffScreen() {
+    const horiz: boolean = Math.random() > 0.5;
+    const offScreenPos = Math.random() > 0.5 ? -50 : 50 + (horiz ? window.innerWidth : window.innerHeight);
+    const onScreenPos = Math.floor(Math.random() * (horiz ? window.innerHeight : window.innerWidth));
+    return horiz ? Vec2.From(offScreenPos, onScreenPos) : Vec2.From(onScreenPos, offScreenPos);
+}
+
+function getRandPosNear() {
+    return targetPos.add(Vec2.From(Math.floor(Math.random() * 100 - 50), Math.floor(Math.random() * 100 - 50)));
+}
+
+function getRandPosAhead() {
+    const dir = rotate(animationDir, Math.random() * 20 - 10);
+    const result = dir.multiply(Math.random() * 50 + 50).add(animationPos);
+    return result;
+}
+
+//#endregion
 
 window.addEventListener("mousemove", onMouseMove)
 window.addEventListener("resize", onResize);
 scaleCanvasToWindow();
 requestAnimationFrame(animate);
 
-const noMouseMessageTimeout = setTimeout(() => {
-    alert("i hear spiders like mouse cursors...\n(this website only works with a mouse)");
-}, 5000);
+let mouseMoved = false;
+const noMouseMessageTimeoutId = setTimeout(() => {
+    targetPos = getRandPosOnScreen();
+    idle();
+    // alert("i hear spiders like mouse cursors...\n(this website only works with a mouse)");
+}, 2000);
 window.addEventListener("mousemove", () => {
-    clearTimeout(noMouseMessageTimeout);
+    mouseMoved = true;
+    clearTimeout(noMouseMessageTimeoutId);
 }, { once: true });
 
 
