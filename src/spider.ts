@@ -10,7 +10,7 @@ function onMouseMove(e: MouseEvent) {
     go(e.x, e.y);
 }
 
-function onTouchMove(e: TouchEvent) {
+function onTouch(e: TouchEvent) {
     go(e.touches[0].pageX, e.touches[0].pageY);
 }
 
@@ -240,7 +240,8 @@ function getRandPosAhead() {
 
 window.addEventListener("mousemove", onMouseMove);
 window.addEventListener("resize", scaleCanvasToWindow);
-window.addEventListener("touchmove", onTouchMove);
+window.addEventListener("touchmove", onTouch);
+window.addEventListener("touchstart", onTouch);
 scaleCanvasToWindow();
 requestAnimationFrame(animate);
 
