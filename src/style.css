@@ -9,6 +9,10 @@ canvas#spider-cursor {
     z-index: 9999;
 }
 
+:root, * {
+    touch-action: none;
+}
+
 header {
     position: absolute;
     top: 0.5rem;

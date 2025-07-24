@@ -4,13 +4,17 @@ import "./style.css";
 const canvas = document.getElementById("spider-cursor") as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
-function onResize(_: UIEvent) {
-    scaleCanvasToWindow();
-}
-
 let targetPos: Vec2 = getRandPosOffScreen();
 
 function onMouseMove(e: MouseEvent) {
+    go(e.x, e.y);
+}
+
+function onTouchMove(e: TouchEvent) {
+    go(e.touches[0].pageX, e.touches[0].pageY);
+}
+
+function go(x: number, y: number) {
     if (noMoveTimeoutId) {
         clearTimeout(noMoveTimeoutId);
         noMoveTimeoutId = undefined;
@@ -21,7 +25,7 @@ function onMouseMove(e: MouseEvent) {
         idleTimeoutId = undefined;
     }
 
-    targetPos = Vec2.From(e.x, e.y);
+    targetPos = Vec2.From(x, y);
 }
 
 let animationDir = Vec2.Zero;
@@ -204,7 +208,7 @@ function setIdleTimeout() {
 let idleTimeoutId: number | undefined;
 function idle() {
     idleTimeoutId = setTimeout(() => {
-        targetPos = Math.random() > 0.8 ? getRandPosOnScreen() : Math.random() > 0.6 ? getRandPosNear() : getRandPosAhead();
+        targetPos = Math.random() > 0.75 ? getRandPosOnScreen() : Math.random() > 0.75 ? getRandPosNear() : getRandPosAhead();
         idle();
     }, Math.floor(Math.random() * 3950 + 50));
 }
@@ -234,8 +238,9 @@ function getRandPosAhead() {
 
 //#endregion
 
-window.addEventListener("mousemove", onMouseMove)
-window.addEventListener("resize", onResize);
+window.addEventListener("mousemove", onMouseMove);
+window.addEventListener("resize", scaleCanvasToWindow);
+window.addEventListener("touchmove", onTouchMove);
 scaleCanvasToWindow();
 requestAnimationFrame(animate);
 
@@ -243,7 +248,6 @@ let mouseMoved = false;
 const noMouseMessageTimeoutId = setTimeout(() => {
     targetPos = getRandPosOnScreen();
     idle();
-    // alert("i hear spiders like mouse cursors...\n(this website only works with a mouse)");
 }, 2000);
 window.addEventListener("mousemove", () => {
     mouseMoved = true;
