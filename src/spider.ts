@@ -59,7 +59,7 @@ const animate: FrameRequestCallback = (_time) => {
 
         animationDir = deltaDistance.normalized();
 
-        if (mouseMoved && !idleTimeoutId && Math.abs(deltaDistance.x) < CURSOR_PADDING && Math.abs(deltaDistance.y) < CURSOR_PADDING) {
+        if (!idleTimeoutId && Math.abs(deltaDistance.x) < CURSOR_PADDING && Math.abs(deltaDistance.y) < CURSOR_PADDING) {
             // if we get here, we can assume the mouse hasn't been moving in a while?
             // so we can set a timeout, and if the mouse moves before the timeout is up, we can cancel it no problem
             setIdleTimeout();
@@ -243,19 +243,8 @@ window.addEventListener("mousemove", onMouseMove);
 window.addEventListener("resize", scaleCanvasToWindow);
 window.addEventListener("touchmove", onTouch);
 window.addEventListener("touchstart", onTouch);
+
 scaleCanvasToWindow();
+setIdleTimeout();
 requestAnimationFrame(animate);
-
-let mouseMoved = false;
-const noMouseMessageTimeoutId = setTimeout(() => {
-    targetPos = getRandPosOnScreen();
-    idle();
-}, 2000);
-window.addEventListener("mousemove", () => {
-    mouseMoved = true;
-    clearTimeout(noMouseMessageTimeoutId);
-}, { once: true });
-
-
-
 
