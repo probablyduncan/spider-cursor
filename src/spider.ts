@@ -160,7 +160,8 @@ function drawLegs(centerPos: Vec2, centerRotation: Vec2) {
 
             let currentPos = feetPositions[legIndex][sideIndex];
 
-            if (!currentPos || currentPos.subtract(idealPos).magnitude() > legStretch) {
+            // reset foot if not already set, if too far from ideal, or randomly if idle
+            if (!currentPos || currentPos.subtract(idealPos).magnitude() > legStretch || (noMoveTimeoutId && Math.random() > 0.99)) {
                 feetPositions[legIndex][sideIndex] = currentPos = idealPos;
             }
 
