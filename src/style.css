@@ -7,10 +7,11 @@ canvas#spider-cursor {
     pointer-events: none;
     user-select: none;
     z-index: 9999;
+    touch-action: none;
 }
 
 :root, * {
-    touch-action: none;
+    overscroll-behavior: none;
 }
 
 header {
