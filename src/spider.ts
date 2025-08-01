@@ -165,13 +165,14 @@ function drawLegs(centerPos: Vec2, centerRotation: Vec2) {
                 feetPositions[legIndex][sideIndex] = currentPos = idealPos;
 
                 const now = new Date().valueOf();
-                const lerpedFromCenter = idealPos.subtract(Vec2.From(window.innerWidth / 2, window.innerHeight / 2))
-                    .abs()
-                    .unlerp(Vec2.Zero, Vec2.From(window.innerWidth / 2, window.innerHeight / 2))
-                    .magnitude();
-
                 if (lastPlay < now - 50) {
                     lastPlay = now;
+
+                    const lerpedFromCenter = idealPos.subtract(Vec2.From(window.innerWidth / 2, window.innerHeight / 2))
+                        .abs()
+                        .unlerp(Vec2.Zero, Vec2.From(window.innerWidth / 2, window.innerHeight / 2))
+                        .magnitude();
+                    
                     playNoteFromLerp(Math.max(0, Math.min(1, 1 - lerpedFromCenter)));
                 }
             }
@@ -276,6 +277,8 @@ button?.addEventListener("click", () => {
     })
 
     audioContext = audioContext ? undefined : new AudioContext();
+
+    unblockAudio();
 });
 
 let lastPlay = 0;
@@ -298,9 +301,9 @@ function playNote(frequency: number) {
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     const time = audioContext.currentTime;
-    
+
     oscillator.type = 'triangle';
     oscillator.frequency.value = frequency;
 
@@ -313,6 +316,31 @@ function playNote(frequency: number) {
     // stop
     gainNode.gain.exponentialRampToValueAtTime(0.001, time + 1);
     oscillator.stop(time + 1);
+}
+
+
+let unblocked = false;
+function unblockAudio() {
+
+    // https://www.audjust.com/blog/unmute-web-audio-on-ios
+    // on ios, audio api doesn't get unblocked on interaction when your phone is on silent?
+    // but when you play a regular html audio element, that unblocks it
+
+    if (unblocked || !audioContext) {
+        return;
+    }
+
+    unblocked = true;
+
+    const audio = document.createElement("audio");
+    audio.setAttribute("x-webkit-airplay", "deny");
+    audio.preload = "auto";
+    audio.loop = true;
+    audio.src = "silence.mp3";
+    audio.play();
+    audio.remove();
+    
+    playNote(0);
 }
 
 //#endregion
