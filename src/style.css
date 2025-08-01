@@ -10,31 +10,55 @@ canvas#spider-cursor {
     touch-action: none;
 }
 
-:root, * {
+:root,
+* {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: unset;
+
     overscroll-behavior: none;
     box-sizing: border-box;
 }
 
-header {
+header,
+footer {
     position: absolute;
+    padding: 0.5rem 1rem;
+}
+
+header {
     top: 0;
     left: 0;
-    padding: 0.5rem 1rem;
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
+    text-wrap: balance;
 }
 
 footer {
-    position: absolute;
     bottom: 0;
     right: 0;
-    padding: 0.5rem 1rem;
+    text-align: right;
+    text-wrap: balance;
 }
 
 button {
-    font-family: unset;
-    font-size: unset;
     cursor: pointer;
     border: unset;
+    background: unset;
+    padding: unset;
+}
+
+a, button, a:visited {
+    color: blue;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
+a:hover, button:hover {
+    text-decoration-style: solid;
+}
+
+a:active, button:active {
+    text-decoration-style: wavy;
+}
+
+a:visited, a:visited:active, button.used {
+    color: purple;
 }

@@ -165,7 +165,7 @@ function drawLegs(centerPos: Vec2, centerRotation: Vec2) {
                 feetPositions[legIndex][sideIndex] = currentPos = idealPos;
 
                 const now = new Date().valueOf();
-                if (lastPlay < now - 50) {
+                if (audioState === "on" && lastPlay < now - 50) {
                     lastPlay = now;
 
                     const lerpedFromCenter = idealPos.subtract(Vec2.From(window.innerWidth / 2, window.innerHeight / 2))
@@ -265,23 +265,33 @@ requestAnimationFrame(animate);
 // https://css-tricks.com/introduction-web-audio-api/
 
 let audioContext: AudioContext | undefined;
+let audioState: "blocked" | "off" | "on" = "blocked";
+let lastPlay = 0;
+
 const button = document.querySelector("button[data-sound-toggle]") as HTMLButtonElement;
-const toggles = document.querySelectorAll("[data-toggle-with-sound]");
 button?.addEventListener("click", () => {
-    const altContent = button.dataset.soundToggle ?? "";
+
+    const onContent = button.dataset.soundToggle ?? "";
     button.dataset.soundToggle = button.innerHTML;
-    button.innerHTML = altContent;
+    button.innerHTML = onContent;
 
-    toggles.forEach(_e => {
-        (_e as HTMLElement).toggleAttribute("hidden");
-    })
+    switch (audioState) {
+        case 'blocked':
+            audioContext = new AudioContext();
+            unblockAudio();
+            button.classList.add("used");
+            audioState = "on";
+            break;
+        case "on":
+            audioState = "off";
+            break;
+        case "off":
+            audioState = "on";
+            break;
+    }
 
-    audioContext = audioContext ? undefined : new AudioContext();
-
-    unblockAudio();
 });
 
-let lastPlay = 0;
 const frequencies = [
     195.9977, 207.6523, 220.0000, 233.0819, 246.9417, 261.6256, 277.1826, 293.6648, 311.1270, 329.6276, 349.2282, 369.9944, 391.9954, 415.3047, 440.0000, 466.1638, 493.8833, 523.2511, 554.3653, 587.3295, 622.2540, 659.2551, 698.4565, 739.9888, 783.9909, 830.6094, 880.0000, 932.3275, 987.7666, 1046.502, 1108.731, 1174.659, 1244.508, 1318.510, 1396.913, 1479.978, 1567.982, 1661.219, 1760.000,
 ]
@@ -319,18 +329,11 @@ function playNote(frequency: number) {
 }
 
 
-let unblocked = false;
 function unblockAudio() {
 
     // https://www.audjust.com/blog/unmute-web-audio-on-ios
     // on ios, audio api doesn't get unblocked on interaction when your phone is on silent?
     // but when you play a regular html audio element, that unblocks it
-
-    if (unblocked || !audioContext) {
-        return;
-    }
-
-    unblocked = true;
 
     const audio = document.createElement("audio");
     audio.setAttribute("x-webkit-airplay", "deny");
