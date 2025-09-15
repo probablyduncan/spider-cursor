@@ -37,11 +37,11 @@ let animationPos: Vec2;
  */
 const CURSOR_PADDING = 20;
 
-// let prevTime: number;
-const animate: FrameRequestCallback = (_time) => {
+let prevTime: number;
+const animate: FrameRequestCallback = (time) => {
 
-    // const deltaMS = time - (prevTime ?? time);
-    // prevTime = time;
+    const deltaMS = time - (prevTime ?? time);
+    prevTime = time;
 
     if (!animationPos) {
         animationPos = targetPos;
@@ -55,8 +55,11 @@ const animate: FrameRequestCallback = (_time) => {
         // push target back a bit to keep the spider off of cursor
         const newTarget = targetPos.subtract(deltaDistance.normalized().multiply(CURSOR_PADDING));
 
+        // base distance to travel towards cursor on time since last frame
+        const lerp = Math.min(1, deltaMS * 0.0030625);
+
         // interpolate the pos of the spider towards the target
-        animationPos = Vec2.From(idleTimeoutId ? 0.01 : 0.05).lerp(prevPos, newTarget);
+        animationPos = Vec2.From(idleTimeoutId ? lerp/2 : lerp).lerp(prevPos, newTarget);
 
         animationDir = deltaDistance.normalized();
 
